@@ -1,0 +1,291 @@
+Bootstrap: debootstrap
+OSVersion: focal
+MirrorURL: http://us.archive.ubuntu.com/ubuntu/
+
+%environment
+    export ANTSPATH=/usr/local/bin
+    # remember the system manpath (from /etc/manpath.config) when prepending:
+    export MANPATH="::"
+    export MINC_COMPRESS=6
+    export MINC_FORCE_V2=1
+    # prevent arbitrary growth in memory use when processing many minc files:
+    export VOLUME_CACHE_THRESHOLD=-1
+
+%post -c /bin/bash
+
+    export MINC_TOOLKIT_COMMIT="eebdf1c8ac9dca58eb2b7af49a39e8b989b63063"
+    export RSTUDIO_VERSION="2021.09.0-351-amd64"
+    export ANTS_VERSION="2.3.5"
+    export MINC2_SIMPLE_COMMIT="6382802dd6e3f712d394c7d708281d05b7e9a82b"
+    export PYDPIPER_VERSION="2.0.15"
+    export PYDPIPER_COMMIT="8d3f355ef8fda7cd73723734c0d4d2cc0f9f0e32"
+    export PYEZMINC_COMMIT="4a1c16f834f1bbe4ebbef2985f42dac1ebd30dd2"
+    export RMINC_VERSION="1.5.3.0"
+    export MICE_LAB_COMMIT="bfa824b45a6301972524f1fef2dbb1ffec0f16e8"
+
+    export DEBIAN_FRONTEND=noninteractive
+
+    # according to the Singularity documentation "best practice" is to install system packages
+    # here rather than via the 'Include' keyword (why?)
+    cat <<EOF > /etc/apt/sources.list
+deb http://ca.archive.ubuntu.com/ubuntu/ focal main restricted
+deb http://ca.archive.ubuntu.com/ubuntu/ focal-updates main restricted
+deb http://ca.archive.ubuntu.com/ubuntu/ focal universe
+deb http://ca.archive.ubuntu.com/ubuntu/ focal-updates universe
+deb http://ca.archive.ubuntu.com/ubuntu/ focal multiverse
+deb http://ca.archive.ubuntu.com/ubuntu/ focal-updates multiverse
+deb http://security.ubuntu.com/ubuntu focal-security main restricted
+deb http://security.ubuntu.com/ubuntu focal-security universe
+deb http://security.ubuntu.com/ubuntu focal-security multiverse
+EOF
+    # NeuroDebian (hkps not working?) (not needed since fsl packaged in Debian):
+    #apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
+#    cat <<EOF > /etc/apt/sources.list.d/neurodebian.sources.list
+#deb http://neurodebian.ovgu.de/debian data main contrib non-free
+##deb-src http://neurodebian.ovgu.de/debian data main contrib non-free
+#deb http://neurodebian.ovgu.de/debian focal main contrib non-free
+##deb-src http://neurodebian.ovgu.de/debian focal main contrib non-free
+#EOF
+    apt-get -y update 
+    apt-get install -y ca-certificates gnupg
+    apt-get install -y  \
+        build-essential  \
+	locales  \
+	autoconf  \
+	automake  \
+	cmake  \
+	libtool  \
+	m4  \
+	flex  \
+	bison  \
+	gdb  \
+	dpkg-sig  \
+	gdebi-core  \
+	swig  \
+	texinfo  \
+	g++  \
+	gfortran  \
+	golang-go  \
+	curl  \
+	wget  \
+	git  \
+	lsof  \
+	emacs  \
+	neovim  \
+	blender  \
+	fsl  \
+	gimp  \
+	imagej  \
+	imagemagick  \
+	inkscape  \
+	itksnap  \
+	mencoder  \
+	meshlab  \
+	mplayer  \
+	octave  \
+        octave-openems  \
+        openems \
+	pandoc  \
+	parallel  \
+	paraview  \
+	python3  \
+	python3-pip  \
+	r-base-core  \
+	texlive-latex-extra  \
+	texlive-science  \
+	vlc  \
+        freeglut3-dev  \
+	libbz2-dev  \
+	libeigen3-dev  \
+	liblzma-dev  \
+        libgl-dev  \
+        libglu-dev  \
+        libopenblas-dev  \
+	libpcre2-dev  \
+	libreadline-dev  \
+	libssl-dev  \
+	libssh-dev  \
+	libsqlite3-dev  \
+	zlib1g-dev
+
+    # update locales
+    locale-gen en_US.UTF-8 en_US en_CA.UTF-8 en_CA
+    #dpkg-reconfigure locales
+
+    # install rstudio desktop and server
+    gpg --keyserver keys.openpgp.org --recv-keys 3F32EE77E331692F
+    (wget https://download1.rstudio.org/desktop/bionic/amd64/rstudio-${RSTUDIO_VERSION}.deb
+     dpkg-sig --verify rstudio-${RSTUDIO_VERSION}.deb
+     gdebi -n rstudio-${RSTUDIO_VERSION}.deb
+     rm rstudio-${RSTUDIO_VERSION}.deb)
+    (wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-${RSTUDIO_VERSION}.deb
+     dpkg-sig --verify rstudio-server-${RSTUDIO_VERSION}.deb
+     gdebi -n rstudio-server-${RSTUDIO_VERSION}.deb
+     rm rstudio-server-${RSTUDIO_VERSION}.deb)
+
+    apt-get autoclean
+    rm -rf /var/lib/apt/lists/*
+
+    # minc-toolkit-v2
+    (git clone --recursive https://github.com/BIC-MNI/minc-toolkit-v2.git
+     mkdir minc-toolkit-v2/build
+     pushd minc-toolkit-v2/build
+     git checkout ${MINC_TOOLKIT_COMMIT}
+     cmake -DMT_BUILD_SHARED_LIBS=ON -DMT_BUILD_ANTS=OFF -DMT_BUILD_VISUAL_TOOLS=ON ..
+     make -j6
+     #make test
+     make install
+     popd
+     rm -rf minc-toolkit-v2)
+    # TODO -DCMAKE_BUILD_TYPE=RelWithDebugInfo
+
+    . /usr/local/minc-toolkit-config.sh
+    echo ". /usr/local/minc-toolkit-config.sh" >> $SINGULARITY_ENVIRONMENT
+    
+    #pip3 install --upgrade pip setuptools wheel
+
+    # some other Python packages have broken builds, require numpy already present
+    pip3 install numpy cython
+
+    pip3 install  \
+      batchgenerators  \
+      bids-validator  \
+      cvxopt  \
+      dask[complete]  \
+      dicom2nifti  \
+      dipy  \
+      disptools  \
+      hyppo  \
+      h5py  \
+      imageio  \
+      intensity-normalization  \
+      ipython  \
+      itk  \
+      joblib  \
+      jupyter  \
+      matplotlib  \
+      meshio  \
+      mne  \
+      neo  \
+      networkx  \
+      nibabel  \
+      nilearn  \
+      nipy  \
+      nipype  \
+      nitime  \
+      numexpr  \
+      onnx  \
+      onnxruntime  \
+      opencv-python  \
+      openpyxl  \
+      pandas  \
+      pillow  \
+      psychopy  \
+      pybids  \
+      pydicom  \
+      pynrrd  \
+      pyosf  \
+      pytest  \
+      pytorch-lightning  \
+      pytorch-metric-learning  \
+      pywavelets  \
+      pyxnat  \
+      scikit-image  \
+      scikit-learn  \
+      scipy  \
+      SimpleITK  \
+      seaborn  \
+      simpy  \
+      skorch  \
+      statsmodels  \
+      sympy  \
+      tables  \
+      tensorboardx  \
+      torch  \
+      torchvision  \
+      transforms3d  \
+      vtk
+    # TODO pysurfer/visbrain/vispy - Mayavi build hangs
+    # TODO install torch, torchvision according to CPU, CUDA etc.?
+    # numba # broken due to numpy bounds
+
+    # install minc-stuffs (automatically installs Pyminc)
+    (git clone --recursive https://github.com/Mouse-Imaging-Centre/minc-stuffs.git
+     cd minc-stuffs
+     ./autogen.sh
+     ./configure --with-minc2 --with-build-path=/usr/local
+     make
+     make install
+     python3 setup.py install
+     cd ..
+     rm -rf minc-stuffs)
+   
+    # install pyezminc
+    (git clone https://github.com/BIC-MNI/pyezminc.git
+     cd pyezminc
+    git checkout ${PYEZMINC_COMMIT}
+     python3 setup.py install
+     cd ..
+     rm -rf pyezminc)
+
+    # install minc2-simple
+    (git clone https://github.com/NIST-MNI/minc2-simple.git
+     mkdir minc2-simple/build
+     pushd minc2-simple/build
+     git checkout ${MINC2_SIMPLE_COMMIT}
+     cmake ..
+     make
+     make install
+     python3 ../python/setup.py install
+     cd ..
+     rm -rf minc2-simple)
+
+    # install ANTs
+    (git clone https://github.com/ANTsX/ANTs.git
+     mkdir ANTs/build
+     pushd ANTs/build
+     git checkout v${ANTS_VERSION}
+     cmake -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
+     make -j6
+     cd ANTS-build && make install
+     popd
+     rm -rf ANTs)
+
+    # TODO install cctools for future Pydpiper
+
+    # install Pydpiper
+    (git clone https://github.com/Mouse-Imaging-Centre/pydpiper.git
+     pushd pydpiper
+     git checkout ${PYDPIPER_COMMIT}
+     python3 setup.py install
+     popd
+     rm -rf pydpiper)
+
+    # install mice-lab
+    (git clone https://github.com/Mouse-Imaging-Centre/MICe-lab.git
+     cd MICe-lab
+     git checkout ${MICE_LAB_COMMIT}
+     ./autogen.sh
+     ./configure
+     make
+     make install
+     python3 setup.py install
+     cd ..
+     rm -rf MICe-lab.git)
+ 
+    # TODO install more viewers (openvv, f3d, seg3d, mango/papaya, slicer)
+
+    # install RMINC and R packages:
+    (Rscript -e 'update.packages(repos="https://cloud.r-project.org",ask=F)'
+     Rscript -e 'install.packages(c("lme4", "lmerTest", "tidyverse", "batchtools", "Rcpp", "rjson", "igraph", "jsonlite", "shiny", "visNetwork", "DT", "testthat", "bigstatsr", "data.tree", "gridBase", "plotrix", "rgl", "rstanarm", "brms", "tidymodels", "vtreat", "dagitty", "lenses", "qvalue", "reticulate"), repos="https://cloud.r-project.org", ask=F)'
+     wget https://github.com/Mouse-Imaging-Centre/RMINC/archive/v${RMINC_VERSION}.tar.gz
+     R CMD INSTALL v${RMINC_VERSION}.tar.gz --configure-args='--with-build-path=/usr/local'
+     rm -f RMINC_${RMINC_VERSION}.tar.gz)
+
+%labels
+    Maintainer Ben Darwin
+    Author benjamin.darwin@sickkids.ca
+    Version 0.1
+    
+%help
+    MICe imaging packages.  Loosely based on Vlad's minc-toolkit-containers repository.
