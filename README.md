@@ -22,6 +22,10 @@ $ singularity shell --bind /projects,/scratch /path/to/container.sif
 
 At the moment everything is installed from Debian/Ubuntu/CRAN/PyPI repos or compiled by hand from source.  In the future some other methods for building a container (e.g. Nix or Spack) might be usable.
 
+Some limitations:
+ - Pydpiper won't work from within the container due to Slurm-related issues.  This should be addressed in an upcoming Pydpiper release.
+ - GL/CUDA functionality may or may not work depending on the host system.
+
 This container is loosely based on Vlad's minc-toolkit-containers repository, with a few differences:
  - everything updated
  - much more software, e.g., FSL, openEMS, Nipype, etc.
