@@ -21,7 +21,7 @@ MirrorURL: http://us.archive.ubuntu.com/ubuntu/
     export PYDPIPER_COMMIT="8d3f355ef8fda7cd73723734c0d4d2cc0f9f0e32"
     export PYEZMINC_COMMIT="4a1c16f834f1bbe4ebbef2985f42dac1ebd30dd2"
     export RMINC_VERSION="1.5.3.0"
-    export MICE_LAB_COMMIT="bfa824b45a6301972524f1fef2dbb1ffec0f16e8"
+    export MICE_LAB_COMMIT="78a54d7c34022aed28af05d2c625e1fe0e3b4778"
 
     export DEBIAN_FRONTEND=noninteractive
 
