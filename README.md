@@ -1,6 +1,6 @@
 # MICe Singularity containers
 
-This repository contains a [Singularity](https://sylabs.io/guides/3.5/user-guide) definition file to build a Singularity container containing a software suite for neuroimaging, and particularly tools used in-house at the Mouse Imaging Centre.  For a complete list of libraries and tools included, see the definition file itself.
+This repository contains a [Singularity](https://sylabs.io/guides/latest/user-guide) definition file to build a Singularity container containing a software suite for neuroimaging, and particularly tools used in-house at the Mouse Imaging Centre.  For a complete list of libraries and tools included, see the definition file itself.
 
 To use an existing container image, use `singularity shell`, `singularity exec`, etc., e.g.:
 
