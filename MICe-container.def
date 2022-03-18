@@ -99,6 +99,7 @@ EOF
 	vlc  \
         freeglut3-dev  \
 	libbz2-dev  \
+	libcurl4-openssl-dev  \
 	libeigen3-dev  \
 	liblzma-dev  \
         libgl-dev  \
@@ -154,8 +155,9 @@ EOF
      rm -rf minc-toolkit-v2)
     # TODO -DCMAKE_BUILD_TYPE=RelWithDebugInfo
 
-    . /usr/local/minc-toolkit-config.sh
-    echo ". /usr/local/minc-toolkit-config.sh" >> $SINGULARITY_ENVIRONMENT
+    export MINC_TOOLKIT_CONFIG=/usr/local/minc-toolkit-config.sh
+    . ${MINC_TOOLKIT_CONFIG}
+    echo "source ${MINC_TOOLKIT_CONFIG}" >> $SINGULARITY_ENVIRONMENT
     
     #pip3 install --upgrade pip setuptools wheel
 
@@ -167,6 +169,7 @@ EOF
       bids-validator  \
       cvxopt  \
       dask[complete]  \
+      datalad  \
       dicom2nifti  \
       dipy  \
       disptools  \
@@ -188,6 +191,7 @@ EOF
       nipy  \
       nipype  \
       nitime  \
+      nitransforms  \
       numexpr  \
       onnx  \
       onnxruntime  \
@@ -238,7 +242,7 @@ EOF
     # install pyezminc
     (git clone https://github.com/BIC-MNI/pyezminc.git
      cd pyezminc
-    git checkout ${PYEZMINC_COMMIT}
+     git checkout ${PYEZMINC_COMMIT}
      python3 setup.py install
      cd ..
      rm -rf pyezminc)
@@ -292,7 +296,7 @@ EOF
 
     # install RMINC and R packages:
     (Rscript -e 'update.packages(repos="https://cloud.r-project.org",ask=F)'
-     Rscript -e 'install.packages(c("lme4", "lmerTest", "tidyverse", "batchtools", "Rcpp", "rjson", "igraph", "jsonlite", "shiny", "visNetwork", "DT", "testthat", "bigstatsr", "data.tree", "gridBase", "plotrix", "rgl", "rstanarm", "brms", "tidymodels", "vtreat", "dagitty", "lenses", "qvalue", "reticulate"), repos="https://cloud.r-project.org", ask=F)'
+     Rscript -e 'install.packages(c("lme4", "lmerTest", "tidyverse", "batchtools", "Rcpp", "rjson", "igraph", "jsonlite", "shiny", "visNetwork", "DT", "testthat", "bigstatsr", "data.table", "data.tree", "gridBase", "plotrix", "rgl", "rstanarm", "brms", "tidymodels", "vtreat", "dagitty", "lenses", "qvalue", "reticulate"), repos="https://cloud.r-project.org", ask=F)'
      wget https://github.com/Mouse-Imaging-Centre/RMINC/archive/v${RMINC_VERSION}.tar.gz
      R CMD INSTALL v${RMINC_VERSION}.tar.gz --configure-args='--with-build-path=/usr/local'
      rm -f RMINC_${RMINC_VERSION}.tar.gz)
