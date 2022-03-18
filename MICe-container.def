@@ -264,7 +264,7 @@ EOF
      mkdir ANTs/build
      pushd ANTs/build
      git checkout v${ANTS_VERSION}
-     cmake -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
+     cmake -DITK_BUILD_MINC_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
      make -j${BUILD_CORES}
      cd ANTS-build && make install
      popd
