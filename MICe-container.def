@@ -10,20 +10,25 @@ MirrorURL: http://us.archive.ubuntu.com/ubuntu/
     export MINC_FORCE_V2=1
     # prevent arbitrary growth in memory use when processing many minc files:
     export VOLUME_CACHE_THRESHOLD=-1
+    # stuff installed by python3 setup.py install rather than pip ends up here:
+    export PYTHONPATH=/usr/lib/python3.8/site-packages:$PYTHONPATH
+    export R_LIBS_SITE=/usr/local/R/packratting/packrat/lib/x86_64-pc-linux-gnu/3.6.3 R
 
 %post -c /bin/bash
 
     export BUILD_CORES=8
 
-    export MINC_TOOLKIT_COMMIT="eebdf1c8ac9dca58eb2b7af49a39e8b989b63063"
-    export RSTUDIO_VERSION="2021.09.0-351-amd64"
-    export ANTS_VERSION="2.3.5"
+    export MINC_TOOLKIT_COMMIT="b98e4972bdac2b78e3c1e412d75c97e2e7c5f6b9"
+    export MINC_TOOLKIT_VERSION="1.9.18.2"
+    export RSTUDIO_VERSION="2022.02.2-485-amd64"
+    export ANTS_VERSION="aacdc61e35a5ea4a4f93f6ac6b04f71d091d6b6d"
     export MINC2_SIMPLE_COMMIT="6382802dd6e3f712d394c7d708281d05b7e9a82b"
-    export PYDPIPER_VERSION="2.0.15"
-    export PYDPIPER_COMMIT="8d3f355ef8fda7cd73723734c0d4d2cc0f9f0e32"
+    export PYDPIPER_VERSION="2.0.16"
+    export PYDPIPER_COMMIT="9accc23cee47bbaa608ff9b9d7ca5278042b2180"
     export PYEZMINC_COMMIT="4a1c16f834f1bbe4ebbef2985f42dac1ebd30dd2"
     export RMINC_VERSION="1.5.3.0"
     export MICE_LAB_COMMIT="78a54d7c34022aed28af05d2c625e1fe0e3b4778"
+    export F3D_VERSION=1.1.1
     export SLICER_VERSION=v4.11.20210226
 
     export DEBIAN_FRONTEND=noninteractive
@@ -49,7 +54,7 @@ EOF
 #deb http://neurodebian.ovgu.de/debian focal main contrib non-free
 ##deb-src http://neurodebian.ovgu.de/debian focal main contrib non-free
 #EOF
-    apt-get -y update 
+    apt-get -y update
     apt-get install -y ca-certificates gnupg
     apt-get install -y  \
         build-essential  \
@@ -110,34 +115,53 @@ EOF
 	libssl-dev  \
 	libssh-dev  \
 	libsqlite3-dev  \
-	zlib1g-dev
+	libxml2-dev  \
+	zlib1g-dev  \
 
     # update locales
     locale-gen en_US.UTF-8 en_US en_CA.UTF-8 en_CA
     #dpkg-reconfigure locales
 
-    # slicer
-    apt-get install -y qt5-default qtmultimedia5-dev qttools5-dev libqt5xmlpatterns5-dev libqt5svg5-dev qtwebengine5-dev qtscript5-dev qtbase5-private-dev libqt5x11extras5-dev libxt-dev
-    (git clone https://github.com/Slicer/Slicer.git
-     cd Slicer
-     git checkout ${SLICER_VERSION}
-     ./Utilities/SetupForDevelopment.sh
-     mkdir build
-     cd build
-     cmake -DCMAKE_BUILD_TYPE=Release ..
-     make -j${BUILD_CORES}
-     ln -s /Slicer/build/Slicer-build/Slicer /usr/bin/Slicer)
+    # f3d # TODO vtk 9
+    #(git clone https://github.com/f3d-app/f3d
+    # cd f3d
+    # git checkout "v${F3D_VERSION}"
+    # mkdir build
+    # cd build
+    # cmake ..
+    # make
+    # make install)
+    # exit 0
 
-    # install rstudio desktop and server
+    # slicer
+    #apt-get install -y qt5-default qtmultimedia5-dev qttools5-dev libqt5xmlpatterns5-dev libqt5svg5-dev qtwebengine5-dev qtscript5-dev qtbase5-private-dev libqt5x11extras5-dev libxt-dev
+    #(git clone https://github.com/Slicer/Slicer.git
+    # cd Slicer
+    # git checkout ${SLICER_VERSION}
+    # ./Utilities/SetupForDevelopment.sh
+    # mkdir build
+    # cd build
+    # cmake -DCMAKE_BUILD_TYPE=Release ..
+    # make -j${BUILD_CORES}
+    # (cd Slicer-build
+    #  make package
+    #  #ctest -j4
+    # )
+    # ln -s /Slicer/build/Slicer-build/Slicer /usr/bin/Slicer
+    # )
+
+    # install rstudio desktop
     gpg --keyserver keys.openpgp.org --recv-keys 3F32EE77E331692F
     (wget https://download1.rstudio.org/desktop/bionic/amd64/rstudio-${RSTUDIO_VERSION}.deb
      dpkg-sig --verify rstudio-${RSTUDIO_VERSION}.deb
      gdebi -n rstudio-${RSTUDIO_VERSION}.deb
      rm rstudio-${RSTUDIO_VERSION}.deb)
-    (wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-${RSTUDIO_VERSION}.deb
-     dpkg-sig --verify rstudio-server-${RSTUDIO_VERSION}.deb
-     gdebi -n rstudio-server-${RSTUDIO_VERSION}.deb
-     rm rstudio-server-${RSTUDIO_VERSION}.deb)
+
+    # to install rstudio-server (needs adaptation for container?):
+    #(wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-${RSTUDIO_VERSION}.deb
+    # dpkg-sig --verify rstudio-server-${RSTUDIO_VERSION}.deb
+    # gdebi -n rstudio-server-${RSTUDIO_VERSION}.deb
+    # rm rstudio-server-${RSTUDIO_VERSION}.deb)
 
     apt-get autoclean
     rm -rf /var/lib/apt/lists/*
@@ -147,24 +171,42 @@ EOF
      mkdir minc-toolkit-v2/build
      pushd minc-toolkit-v2/build
      git checkout ${MINC_TOOLKIT_COMMIT}
-     cmake -DMT_BUILD_SHARED_LIBS=ON -DMT_BUILD_ANTS=OFF -DMT_BUILD_VISUAL_TOOLS=ON ..
+     git submodule update --recursive
+     # TODO build updated external c3d and set -DMT_BUILD_C3D=OFF
+     cmake -DMT_BUILD_SHARED_LIBS=ON -DMT_BUILD_ANTS=OFF -DMT_BUILD_VISUAL_TOOLS=ON -DMT_BUILD_ELASTIX=OFF ..
      make -j${BUILD_CORES}
      #make test
      make install
      popd
      rm -rf minc-toolkit-v2)
     # TODO -DCMAKE_BUILD_TYPE=RelWithDebugInfo
+    # TODO Elastix - separate build?
 
     export MINC_TOOLKIT_CONFIG=/usr/local/minc-toolkit-config.sh
+    sed -i '/LD_LIBRARY_PATH/d' ${MINC_TOOLKIT_CONFIG}
     . ${MINC_TOOLKIT_CONFIG}
     echo "source ${MINC_TOOLKIT_CONFIG}" >> $SINGULARITY_ENVIRONMENT
-    
-    #pip3 install --upgrade pip setuptools wheel
 
-    # some other Python packages have broken builds, require numpy already present
-    pip3 install numpy cython
+   # install ANTs
+    (git clone https://github.com/ANTsX/ANTs.git
+     mkdir ANTs/build
+     pushd ANTs/build
+     git checkout ${ANTS_VERSION}
+     cmake -DITK_BUILD_MINC_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
+     make -j${BUILD_CORES}
+     cd ANTS-build && make install
+     popd
+     rm -rf ANTs)
 
-    pip3 install  \
+
+    pip3 install --upgrade pip setuptools wheel
+
+    # some other Python packages have broken builds,
+    # and require numpy already present
+    pip3 install --upgrade numpy cython
+
+    pip3 install --upgrade  \
+      balsam-flow  \
       batchgenerators  \
       bids-validator  \
       cvxopt  \
@@ -178,7 +220,6 @@ EOF
       imageio  \
       intensity-normalization  \
       ipython  \
-      itk  \
       joblib  \
       jupyter  \
       matplotlib  \
@@ -193,8 +234,6 @@ EOF
       nitime  \
       nitransforms  \
       numexpr  \
-      onnx  \
-      onnxruntime  \
       opencv-python  \
       openpyxl  \
       pandas  \
@@ -205,28 +244,31 @@ EOF
       pynrrd  \
       pyosf  \
       pytest  \
-      pytorch-lightning  \
-      pytorch-metric-learning  \
       pywavelets  \
       pyxnat  \
+      scikit-build  \
       scikit-image  \
       scikit-learn  \
       scipy  \
       SimpleITK  \
       seaborn  \
       simpy  \
-      skorch  \
       statsmodels  \
       sympy  \
       tables  \
-      tensorboardx  \
-      torch  \
-      torchvision  \
       transforms3d  \
-      vtk
+      #pytorch-lightning  \
+      #pytorch-metric-learning  \
+      #skorch  \
+      #tensorboardx  \
+      #torch  \
+      #torchvision  \
     # TODO pysurfer/visbrain/vispy - Mayavi build hangs
     # TODO install torch, torchvision according to CPU, CUDA etc.?
     # numba # broken due to numpy bounds
+    # TODO itk - no wheel for 22.04 ?
+    # TODO vtk - borked
+    # TODO onnx and/or onnxruntime - borked
 
     # install minc-stuffs (automatically installs Pyminc)
     (git clone --recursive https://github.com/Mouse-Imaging-Centre/minc-stuffs.git
@@ -235,15 +277,16 @@ EOF
      ./configure --with-minc2 --with-build-path=/usr/local
      make
      make install
-     python3 setup.py install
+     pip3 install .
      cd ..
      rm -rf minc-stuffs)
-   
+
     # install pyezminc
     (git clone https://github.com/BIC-MNI/pyezminc.git
      cd pyezminc
      git checkout ${PYEZMINC_COMMIT}
-     python3 setup.py install
+     pip3 install .
+     #python3 setup.py install
      cd ..
      rm -rf pyezminc)
 
@@ -251,24 +294,15 @@ EOF
     (git clone https://github.com/NIST-MNI/minc2-simple.git
      mkdir minc2-simple/build
      pushd minc2-simple/build
+     pushd build
      git checkout ${MINC2_SIMPLE_COMMIT}
      cmake ..
      make
      make install
      python3 ../python/setup.py install
-     cd ..
-     rm -rf minc2-simple)
-
-    # install ANTs
-    (git clone https://github.com/ANTsX/ANTs.git
-     mkdir ANTs/build
-     pushd ANTs/build
-     git checkout v${ANTS_VERSION}
-     cmake -DITK_BUILD_MINC_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
-     make -j${BUILD_CORES}
-     cd ANTS-build && make install
+     #pip3 install .
      popd
-     rm -rf ANTs)
+     rm -rf minc2-simple)
 
     # TODO install cctools for future Pydpiper
 
@@ -276,7 +310,7 @@ EOF
     (git clone https://github.com/Mouse-Imaging-Centre/pydpiper.git
      pushd pydpiper
      git checkout ${PYDPIPER_COMMIT}
-     python3 setup.py install
+     pip3 install .
      popd
      rm -rf pydpiper)
 
@@ -288,23 +322,31 @@ EOF
      ./configure
      make
      make install
-     python3 setup.py install
+     #python3 setup.py install
+     pip3 install .
      cd ..
      rm -rf MICe-lab.git)
- 
+
     # TODO install more viewers (openvv, f3d, seg3d, mango/papaya, slicer)
 
     # install RMINC and R packages:
-    (Rscript -e 'update.packages(repos="https://cloud.r-project.org",ask=F)'
-     Rscript -e 'install.packages(c("lme4", "lmerTest", "tidyverse", "batchtools", "Rcpp", "rjson", "igraph", "jsonlite", "shiny", "visNetwork", "DT", "testthat", "bigstatsr", "data.table", "data.tree", "gridBase", "plotrix", "rgl", "rstanarm", "brms", "tidymodels", "vtreat", "dagitty", "lenses", "qvalue", "reticulate"), repos="https://cloud.r-project.org", ask=F)'
-     wget https://github.com/Mouse-Imaging-Centre/RMINC/archive/v${RMINC_VERSION}.tar.gz
-     R CMD INSTALL v${RMINC_VERSION}.tar.gz --configure-args='--with-build-path=/usr/local'
-     rm -f RMINC_${RMINC_VERSION}.tar.gz)
+    (wget https://github.com/Mouse-Imaging-Centre/RMINC/files/8307296/packratting-2022-03-18.tar.gz
+     mkdir -p /usr/local/R
+     Rscript -e 'install.packages("packrat"); library(packrat); packrat::unbundle("packratting-2022-03-18.tar.gz", where="/usr/local/R")'
+     export R_LIBS_SITE=/usr/local/R/packratting/packrat/lib/x86_64-pc-linux-gnu/3.6.3 R
+     Rscript -e 'library(devtools); devtools::install_github("Mouse-Imaging-Centre/RMINC@807ffc5886ae8ec407ecbbff81271e5476c08a41", upgrade="never"); devtools::install_github("Mouse-Imaging-Centre/MRIcrotome", upgrade="never")'
+     rm packratting-2022-03-18.tar.gz)
+
+    #(Rscript -e 'update.packages(repos="https://cloud.r-project.org",ask=F)'
+    # Rscript -e 'install.packages(c("lme4", "lmerTest", "tidyverse", "batchtools", "Rcpp", "rjson", "igraph", "jsonlite", "shiny", "visNetwork", "DT", "testthat", "bigstatsr", "data.table", "data.tree", "gridBase", "plotrix", "rgl", "rstanarm", "brms", "tidymodels", "vtreat", "dagitty", "lenses", "qvalue", "reticulate"), repos="https://cloud.r-project.org", ask=F)'
+    # wget https://github.com/Mouse-Imaging-Centre/RMINC/archive/v${RMINC_VERSION}.tar.gz
+    # R CMD INSTALL v${RMINC_VERSION}.tar.gz --configure-args='--with-build-path=/usr/local'
+    # rm -f RMINC_${RMINC_VERSION}.tar.gz)
 
 %labels
     Maintainer Ben Darwin
     Author benjamin.darwin@sickkids.ca
-    Version 0.1
-    
+    Version 0.2
+
 %help
     MICe imaging packages.  Loosely based on Vlad's minc-toolkit-containers repository.
