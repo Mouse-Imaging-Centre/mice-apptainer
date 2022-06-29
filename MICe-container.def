@@ -23,7 +23,8 @@ MirrorURL: http://us.archive.ubuntu.com/ubuntu/
     export RSTUDIO_VERSION="2022.02.2-485-amd64"
     export ANTS_VERSION="aacdc61e35a5ea4a4f93f6ac6b04f71d091d6b6d"
     export MINC2_SIMPLE_COMMIT="6382802dd6e3f712d394c7d708281d05b7e9a82b"
-    export PYDPIPER_VERSION="2.0.17"
+    export CCTOOLS_VERSION="release/7.4.7"
+    export PYDPIPER_VERSION="2.0.18"
     export PYDPIPER_COMMIT="e63fb4a6380ce37820d1ae07e1d03e7c1112f005"
     export PYEZMINC_COMMIT="4a1c16f834f1bbe4ebbef2985f42dac1ebd30dd2"
     export RMINC_VERSION="1.5.3.0"
@@ -121,6 +122,14 @@ EOF
     # update locales
     locale-gen en_US.UTF-8 en_US en_CA.UTF-8 en_CA
     #dpkg-reconfigure locales
+
+    # install cctools
+    (git clone https://github.com/cooperative-computing-lab/cctools.git
+     pushd cctools
+     git checkout ${CCTOOLS_VERSION}
+     ./configure --prefix=/usr && make && make install
+     popd
+     rm -rf cctools)
 
     # f3d # TODO vtk 9
     #(git clone https://github.com/f3d-app/f3d
