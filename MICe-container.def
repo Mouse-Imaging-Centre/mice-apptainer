@@ -313,8 +313,6 @@ EOF
      popd
      rm -rf minc2-simple)
 
-    # TODO install cctools for future Pydpiper
-
     # install Pydpiper
     (git clone https://github.com/Mouse-Imaging-Centre/pydpiper.git
      pushd pydpiper
