@@ -167,10 +167,11 @@ EOF
      rm rstudio-${RSTUDIO_VERSION}.deb)
 
     # to install rstudio-server (needs adaptation for container?):
-    #(wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-${RSTUDIO_VERSION}.deb
-    # dpkg-sig --verify rstudio-server-${RSTUDIO_VERSION}.deb
-    # gdebi -n rstudio-server-${RSTUDIO_VERSION}.deb
-    # rm rstudio-server-${RSTUDIO_VERSION}.deb)
+    (wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-${RSTUDIO_VERSION}.deb
+     dpkg-sig --verify rstudio-server-${RSTUDIO_VERSION}.deb
+     gdebi -n rstudio-server-${RSTUDIO_VERSION}.deb
+     rm rstudio-server-${RSTUDIO_VERSION}.deb)
+    exit 0
 
     apt-get autoclean
     rm -rf /var/lib/apt/lists/*
