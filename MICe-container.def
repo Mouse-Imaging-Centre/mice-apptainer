@@ -20,7 +20,7 @@ MirrorURL: http://us.archive.ubuntu.com/ubuntu/
 
     export MINC_TOOLKIT_COMMIT="b98e4972bdac2b78e3c1e412d75c97e2e7c5f6b9"
     export MINC_TOOLKIT_VERSION="1.9.18.2"
-    export RSTUDIO_VERSION="2022.02.2-485-amd64"
+    export RSTUDIO_VERSION="2022.07.1-554-amd64"
     export ANTS_VERSION="aacdc61e35a5ea4a4f93f6ac6b04f71d091d6b6d"
     export MINC2_SIMPLE_COMMIT="6382802dd6e3f712d394c7d708281d05b7e9a82b"
     export CCTOOLS_VERSION="release/7.4.7"
