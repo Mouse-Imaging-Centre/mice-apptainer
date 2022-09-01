@@ -122,97 +122,12 @@ EOF
     locale-gen en_US.UTF-8 en_US en_CA.UTF-8 en_CA
     #dpkg-reconfigure locales
 
-    # install cctools
-    (git clone https://github.com/cooperative-computing-lab/cctools.git
-     pushd cctools
-     git checkout ${CCTOOLS_VERSION}
-     ./configure --prefix=/usr && make && make install
-     popd
-     rm -rf cctools)
-
-    # f3d # TODO vtk 9
-    #(git clone https://github.com/f3d-app/f3d
-    # cd f3d
-    # git checkout "v${F3D_VERSION}"
-    # mkdir build
-    # cd build
-    # cmake ..
-    # make
-    # make install)
-    # exit 0
-
-    # slicer
-    #apt-get install -y qt5-default qtmultimedia5-dev qttools5-dev libqt5xmlpatterns5-dev libqt5svg5-dev qtwebengine5-dev qtscript5-dev qtbase5-private-dev libqt5x11extras5-dev libxt-dev
-    #(git clone https://github.com/Slicer/Slicer.git
-    # cd Slicer
-    # git checkout ${SLICER_VERSION}
-    # ./Utilities/SetupForDevelopment.sh
-    # mkdir build
-    # cd build
-    # cmake -DCMAKE_BUILD_TYPE=Release ..
-    # make -j${BUILD_CORES}
-    # (cd Slicer-build
-    #  make package
-    #  #ctest -j4
-    # )
-    # ln -s /Slicer/build/Slicer-build/Slicer /usr/bin/Slicer
-    # )
-
-    # install rstudio desktop
-    gpg --keyserver keys.openpgp.org --recv-keys 3F32EE77E331692F
-    (wget https://download1.rstudio.org/desktop/bionic/amd64/rstudio-${RSTUDIO_VERSION}.deb
-     dpkg-sig --verify rstudio-${RSTUDIO_VERSION}.deb
-     gdebi -n rstudio-${RSTUDIO_VERSION}.deb
-     rm rstudio-${RSTUDIO_VERSION}.deb)
-
-    # to install rstudio-server (needs adaptation for container?):
-    (wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-${RSTUDIO_VERSION}.deb
-     dpkg-sig --verify rstudio-server-${RSTUDIO_VERSION}.deb
-     gdebi -n rstudio-server-${RSTUDIO_VERSION}.deb
-     rm rstudio-server-${RSTUDIO_VERSION}.deb)
-    exit 0
-
-    apt-get autoclean
-    rm -rf /var/lib/apt/lists/*
-
-    # minc-toolkit-v2
-    (git clone --recursive https://github.com/BIC-MNI/minc-toolkit-v2.git
-     mkdir minc-toolkit-v2/build
-     pushd minc-toolkit-v2/build
-     git checkout ${MINC_TOOLKIT_COMMIT}
-     git submodule update --recursive
-     # TODO build updated external c3d and set -DMT_BUILD_C3D=OFF
-     cmake -DMT_BUILD_SHARED_LIBS=ON -DMT_BUILD_ANTS=OFF -DMT_BUILD_VISUAL_TOOLS=ON -DMT_BUILD_ELASTIX=OFF ..
-     make -j${BUILD_CORES}
-     #make test
-     make install
-     popd
-     rm -rf minc-toolkit-v2)
-    # TODO -DCMAKE_BUILD_TYPE=RelWithDebugInfo
-    # TODO Elastix - separate build?
-
-    export MINC_TOOLKIT_CONFIG=/usr/local/minc-toolkit-config.sh
-    sed -i '/LD_LIBRARY_PATH/d' ${MINC_TOOLKIT_CONFIG}
-    . ${MINC_TOOLKIT_CONFIG}
-    echo "source ${MINC_TOOLKIT_CONFIG}" >> $SINGULARITY_ENVIRONMENT
-
-   # install ANTs
-    (git clone https://github.com/ANTsX/ANTs.git
-     mkdir ANTs/build
-     pushd ANTs/build
-     git checkout ${ANTS_VERSION}
-     cmake -DITK_BUILD_MINC_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
-     make -j${BUILD_CORES}
-     cd ANTS-build && make install
-     popd
-     rm -rf ANTs)
-
-
     pip3 install --upgrade pip setuptools wheel
 
     # some other Python packages have broken builds,
     # and require numpy already present
     pip3 install --upgrade numpy cython
+    pip3 install attrdict  # missing wxPython==4.2.0 dep
 
     pip3 install --upgrade  \
       balsam-flow  \
@@ -247,7 +162,6 @@ EOF
       openpyxl  \
       pandas  \
       pillow  \
-      psychopy  \
       pybids  \
       pydicom  \
       pynrrd  \
@@ -272,12 +186,96 @@ EOF
       #tensorboardx  \
       #torch  \
       #torchvision  \
+      #psychopy  \  wxPython/wxwidgets install fails
     # TODO pysurfer/visbrain/vispy - Mayavi build hangs
     # TODO install torch, torchvision according to CPU, CUDA etc.?
     # numba # broken due to numpy bounds
     # TODO itk - no wheel for 22.04 ?
     # TODO vtk - borked
     # TODO onnx and/or onnxruntime - borked
+
+    # install cctools
+    (git clone https://github.com/cooperative-computing-lab/cctools.git
+     pushd cctools
+     git checkout ${CCTOOLS_VERSION}
+     ./configure --prefix=/usr && make && make install
+     popd
+     rm -rf cctools)
+
+    # f3d # TODO vtk 9
+    #(git clone https://github.com/f3d-app/f3d
+    # cd f3d
+    # git checkout "v${F3D_VERSION}"
+    # mkdir build
+    # cd build
+    # cmake ..
+    # make
+    # make install)
+
+    # slicer
+    #apt-get install -y qt5-default qtmultimedia5-dev qttools5-dev libqt5xmlpatterns5-dev libqt5svg5-dev qtwebengine5-dev qtscript5-dev qtbase5-private-dev libqt5x11extras5-dev libxt-dev
+    #(git clone https://github.com/Slicer/Slicer.git
+    # cd Slicer
+    # git checkout ${SLICER_VERSION}
+    # ./Utilities/SetupForDevelopment.sh
+    # mkdir build
+    # cd build
+    # cmake -DCMAKE_BUILD_TYPE=Release ..
+    # make -j${BUILD_CORES}
+    # (cd Slicer-build
+    #  make package
+    #  #ctest -j4
+    # )
+    # ln -s /Slicer/build/Slicer-build/Slicer /usr/bin/Slicer
+    # )
+
+    # install rstudio desktop
+    gpg --keyserver keys.openpgp.org --recv-keys 3F32EE77E331692F
+    (wget https://download1.rstudio.org/desktop/bionic/amd64/rstudio-${RSTUDIO_VERSION}.deb
+     dpkg-sig --verify rstudio-${RSTUDIO_VERSION}.deb
+     gdebi -n rstudio-${RSTUDIO_VERSION}.deb
+     rm rstudio-${RSTUDIO_VERSION}.deb)
+
+    # to install rstudio-server (needs adaptation for container?):
+    (wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-${RSTUDIO_VERSION}.deb
+     dpkg-sig --verify rstudio-server-${RSTUDIO_VERSION}.deb
+     gdebi -n rstudio-server-${RSTUDIO_VERSION}.deb
+     rm rstudio-server-${RSTUDIO_VERSION}.deb)
+
+    apt-get autoclean
+    rm -rf /var/lib/apt/lists/*
+
+    # minc-toolkit-v2
+    (git clone --recursive https://github.com/BIC-MNI/minc-toolkit-v2.git
+     mkdir minc-toolkit-v2/build
+     pushd minc-toolkit-v2/build
+     git checkout ${MINC_TOOLKIT_COMMIT}
+     git submodule update --recursive
+     # TODO build updated external c3d and set -DMT_BUILD_C3D=OFF
+     cmake -DMT_BUILD_SHARED_LIBS=ON -DMT_BUILD_ANTS=OFF -DMT_BUILD_VISUAL_TOOLS=ON -DMT_BUILD_ELASTIX=OFF ..
+     make -j${BUILD_CORES}
+     #make test
+     make install
+     popd
+     rm -rf minc-toolkit-v2)
+    # TODO -DCMAKE_BUILD_TYPE=RelWithDebugInfo
+    # TODO Elastix - separate build?
+
+    export MINC_TOOLKIT_CONFIG=/usr/local/minc-toolkit-config.sh
+    sed -i '/LD_LIBRARY_PATH/d' ${MINC_TOOLKIT_CONFIG}
+    . ${MINC_TOOLKIT_CONFIG}
+    echo "source ${MINC_TOOLKIT_CONFIG}" >> $SINGULARITY_ENVIRONMENT
+
+    # install ANTs
+    (git clone https://github.com/ANTsX/ANTs.git
+     mkdir ANTs/build
+     pushd ANTs/build
+     git checkout ${ANTS_VERSION}
+     cmake -DITK_BUILD_MINC_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
+     make -j${BUILD_CORES}
+     cd ANTS-build && make install
+     popd
+     rm -rf ANTs)
 
     # install minc-stuffs (automatically installs Pyminc)
     (git clone --recursive https://github.com/Mouse-Imaging-Centre/minc-stuffs.git
@@ -353,7 +351,7 @@ EOF
 %labels
     Maintainer Ben Darwin
     Author benjamin.darwin@sickkids.ca
-    Version 0.2
+    Version 20220901
 
 %help
     MICe imaging packages.  Loosely based on Vlad's minc-toolkit-containers repository.
