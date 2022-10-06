@@ -46,16 +46,23 @@ deb http://security.ubuntu.com/ubuntu focal-security main restricted
 deb http://security.ubuntu.com/ubuntu focal-security universe
 deb http://security.ubuntu.com/ubuntu focal-security multiverse
 EOF
-    # NeuroDebian (hkps not working?) (not needed since fsl packaged in Debian):
-    #apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
-#    cat <<EOF > /etc/apt/sources.list.d/neurodebian.sources.list
-#deb http://neurodebian.ovgu.de/debian data main contrib non-free
-##deb-src http://neurodebian.ovgu.de/debian data main contrib non-free
-#deb http://neurodebian.ovgu.de/debian focal main contrib non-free
-##deb-src http://neurodebian.ovgu.de/debian focal main contrib non-free
-#EOF
+
     apt-get -y update
     apt-get install -y ca-certificates gnupg
+
+    # NeuroDebian (if needed):
+    # note neurodebian >= 20.04 doesn't have fsleyes :)
+    #apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
+    #mkdir -p /etc/apt/sources.list.d
+    #cat <<EOF >> /etc/apt/sources.list
+    cat <<EOF > /etc/apt/sources.list.d/neurodebian.sources.list
+deb http://neurodebian.ovgu.de/debian data main contrib non-free
+#deb-src http://neurodebian.ovgu.de/debian data main contrib non-free
+deb http://neurodebian.ovgu.de/debian focal main contrib non-free
+#deb-src http://neurodebian.ovgu.de/debian focal main contrib non-free
+EOF
+
+    apt-get -y update
     apt-get install -y  \
         build-essential  \
 	locales  \
