@@ -1,5 +1,5 @@
 Bootstrap: debootstrap
-OSVersion: noble
+OSVersion: focal
 MirrorURL: http://us.archive.ubuntu.com/ubuntu/
 
 %environment
@@ -50,18 +50,7 @@ EOF
     apt-get -y update
     apt-get install -y ca-certificates gnupg
 
-# Saoirse note: neurodebian repo is down
-    # NeuroDebian (if needed): 
-    # note neurodebian >= 20.04 doesn't have fsleyes :)
-    #apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
-    #mkdir -p /etc/apt/sources.list.d
-    #cat <<EOF >> /etc/apt/sources.list
-#    cat <<EOF > /etc/apt/sources.list.d/neurodebian.sources.list
-#deb http://neurodebian.ovgu.de/debian data main contrib non-free
-#deb-src http://neurodebian.ovgu.de/debian data main contrib non-free
-#deb http://neurodebian.ovgu.de/debian focal main contrib non-free
-#deb-src http://neurodebian.ovgu.de/debian focal main contrib non-free
-#EOF
+    # NeuroDebian (removed because this repo is down)
 
     apt-get -y update
     apt-get install -y  \
@@ -90,14 +79,14 @@ EOF
 	neovim  \
 	blender  \
 	fsl  \
-	hdf5-helpers \
-	gimp \
+	gimp  \
 	imagej  \
 	imagemagick  \
 	inkscape  \
 	itksnap  \
 	mencoder  \
 	meshlab  \
+	mplayer  \
 	octave  \
         octave-openems  \
         openems \
@@ -109,6 +98,7 @@ EOF
 	r-base-core  \
 	texlive-latex-extra  \
 	texlive-science  \
+	vlc  \
         freeglut3-dev  \
 	libbz2-dev  \
 	libcurl4-openssl-dev  \
@@ -356,9 +346,9 @@ EOF
     # rm -f RMINC_${RMINC_VERSION}.tar.gz)
 
 %labels
-    Maintainer Saoirse 
-    Author
+    Maintainer Ben Darwin
+    Author benjamin.darwin@sickkids.ca
     Version 20240726
 
-%HELP
-    Mice imaging packages.  Loosely based on Vlad's minc-toolkit-containers repository.
+%help
+    MICe imaging packages.  Loosely based on Vlad's minc-toolkit-containers repository.
