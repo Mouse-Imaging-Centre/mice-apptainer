@@ -2,7 +2,7 @@
 
 This repository contains an [Apptainer](https://apptainer.org)/[Singularity](https://sylabs.io/guides/latest/user-guide) definition file to build a container containing a software suite for neuroimaging, and particularly tools used in-house at the Mouse Imaging Centre.  For a complete list of libraries and tools included, see the definition file itself.
 
-You can pull a prebuilt (`x86_64`) container image from cloud.sylabs.io via
+You can pull a prebuilt (`x86_64`) container image from cloud.sylabs.io via (out of date)
 
 ```
 $ singularity pull library://bcdarwin/mice/mice.sif:latest
@@ -11,13 +11,13 @@ $ singularity pull library://bcdarwin/mice/mice.sif:latest
 To use the image, use `singularity shell`, `singularity exec`, etc., e.g.:
 
 ```
-$ singularity shell --bind /projects,/scratch /path/to/container.sif
+$ singularity shell --bind /projects,/home /path/to/container.sif
 ```
 
 or
 
 ```
-$ singularity exec --bind /projects,/scratch /path/to/container.sif <...cmd...>
+$ singularity exec --bind /projects,/home /path/to/container.sif <...cmd...>
 ```
 
 If you need to rebuild a container from this Git repository yourself, use `singularity build`, e.g.
